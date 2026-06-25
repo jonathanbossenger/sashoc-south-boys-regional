@@ -187,10 +187,10 @@
 </head>
 <body>
   <main>
-    <section class="hero">
+    <header class="hero" role="banner">
       <h1>SASHOC South Boys Regional Fixtures</h1>
       <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
-    </section>
+    </header>
 
     <section class="filters" aria-label="Fixture filters">
       <div class="filter-grid">
@@ -266,6 +266,20 @@
 
     let teamLookupByAgeGroup = {};
     let fixtures = [];
+    const MONTH_INDEXES = {
+      JANUARY: 0,
+      FEBRUARY: 1,
+      MARCH: 2,
+      APRIL: 3,
+      MAY: 4,
+      JUNE: 5,
+      JULY: 6,
+      AUGUST: 7,
+      SEPTEMBER: 8,
+      OCTOBER: 9,
+      NOVEMBER: 10,
+      DECEMBER: 11
+    };
 
     function normalize(value) {
       return value
@@ -290,13 +304,27 @@
 
     function parseFixtureDateTime(dateValue, timeValue) {
       const startTime = timeValue.split("–")[0].trim();
-      const [hours, minutes] = startTime.replace("h", ":").split(":");
+      const timeMatch = startTime.match(/^(\d{1,2})h(\d{2})$/);
+      const dateMatch = dateValue.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
 
-      if (!dateValue || !hours || !minutes) {
+      if (!timeMatch || !dateMatch) {
         return null;
       }
 
-      return new Date(`${dateValue} ${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`);
+      const [, day, monthName, year] = dateMatch;
+      const monthIndex = MONTH_INDEXES[monthName.toUpperCase()];
+
+      if (monthIndex === undefined) {
+        return null;
+      }
+
+      return new Date(
+        Number(year),
+        monthIndex,
+        Number(day),
+        Number(timeMatch[1]),
+        Number(timeMatch[2])
+      );
     }
 
     function buildTeamLookup(rows) {
@@ -323,12 +351,12 @@
         return;
       }
 
-      teams.add(meta.team);
+      teams.set(normalize(meta.team), meta.team);
       meta.pools.forEach((pool) => pools.add(pool));
     }
 
     function extractFixtureMeta(ageGroup, game) {
-      const teams = new Set();
+      const teams = new Map();
       const pools = new Set();
       const teamLookup = teamLookupByAgeGroup[ageGroup] || {};
       const aliases = TEAM_ALIASES[ageGroup] || {};
@@ -359,7 +387,7 @@
         }
 
         if (!matchedMeta && !mentionsPoolA && !mentionsPoolB && !mentionsSinglePool) {
-          teams.add(alias || side);
+          teams.set(normalize(alias || side), alias || side);
 
           if (ageGroup === "18") {
             pools.add("SINGLE POOL");
@@ -372,7 +400,7 @@
       }
 
       return {
-        teams: Array.from(teams).sort(),
+        teams: Array.from(teams.values()).sort(),
         pools: Array.from(pools).sort()
       };
     }
@@ -537,7 +565,7 @@
               pools: meta.pools
             };
           })
-          .filter((fixture) => fixture.dateTime instanceof Date && !Number.isNaN(fixture.dateTime.valueOf()))
+          .filter((fixture) => fixture.dateTime !== null && !Number.isNaN(fixture.dateTime.valueOf()))
           .sort((left, right) => left.dateTime - right.dateTime);
 
         populateSelect(
