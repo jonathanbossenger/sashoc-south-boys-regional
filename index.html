@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SASHOC South Boys Regional Fixtures</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f4f7fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f8;
+      --border: #d5dee8;
+      --text: #16324f;
+      --muted: #577089;
+      --accent: #0052cc;
+      --accent-soft: #d9e8ff;
+      --shadow: 0 12px 30px rgba(22, 50, 79, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 72rem);
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .hero,
+    .filters,
+    .fixture-card,
+    .message {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .filters {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    select,
+    button {
+      width: 100%;
+      min-height: 2.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      font: inherit;
+    }
+
+    select {
+      padding: 0 0.85rem;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    button {
+      padding: 0.85rem 1rem;
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      align-self: end;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: #003e9b;
+    }
+
+    .status {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .fixture-list {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .fixture-card {
+      padding: 1rem;
+    }
+
+    .fixture-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .fixture-title {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .badge.accent {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .fixture-details {
+      display: grid;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .message {
+      padding: 1rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (min-width: 48rem) {
+      main {
+        padding: 2rem 1.5rem 3rem;
+      }
+
+      .filter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero" role="banner">
+      <h1>SASHOC South Boys Regional Fixtures</h1>
+      <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
+    </header>
+
+    <section class="filters" aria-label="Fixture filters">
+      <div class="filter-grid">
+        <label for="age-group-filter">
+          Age group
+          <select id="age-group-filter">
+            <option value="">All age groups</option>
+          </select>
+        </label>
+
+        <label for="pool-filter">
+          Pool
+          <select id="pool-filter">
+            <option value="">All pools</option>
+          </select>
+        </label>
+
+        <label for="team-filter">
+          Team
+          <select id="team-filter">
+            <option value="">All teams</option>
+          </select>
+        </label>
+
+        <label>
+          Reset filters
+          <button id="reset-filters" type="button">Show all upcoming fixtures</button>
+        </label>
+      </div>
+    </section>
+
+    <p id="status" class="status" aria-live="polite">Loading fixtures…</p>
+    <section id="fixture-list" class="fixture-list" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const AGE_GROUP_LABELS = {
+      "14": "Boys Under 14",
+      "16": "Boys Under 16",
+      "18": "Boys Under 18"
+    };
+
+    const TEAM_ALIASES = {
+      "14": {
+        "BORDER INLAND": "BORDER",
+        "EASTERN PROVINCE B": "EP B",
+        "EASTERN PROVINCE": "EP B",
+        "NORTHERN CAPE B": "N CAPE B",
+        "NORTHERN CAPE B C": "N CAPE B",
+        "WESTERN PROVINCE": "WP B"
+      },
+      "16": {
+        "BORDER INLAND": "BORDER",
+        "EASTERN PROVINCE C": "EP C",
+        "NORTHERN CAPE": "N CAPE B",
+        "NORTHERN CAPE B": "N CAPE B"
+      },
+      "18": {
+        "BORDER": "BORDER INLAND",
+        "EP B": "EASTERN PROVINCE B",
+        "N CAPE B": "NORTHERN CAPE B",
+        "SFS C": "SOUTHERN FS C",
+        "EDEN": "EDEN B"
+      }
+    };
+
+    const FIXTURE_ROWS = [{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"1","age_group":"14","time":"08h00 – 08h55","play_off":"","game":"BORDER INLAND vs BOLAND B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"2","age_group":"14","time":"09h00 – 09h55","play_off":"","game":"BOLAND C vs WESTERN PROVINCE","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"3","age_group":"14","time":"10h00 – 10h55","play_off":"","game":"NORTHERN CAPE B vs SFS B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"4","age_group":"14","time":"11h00 – 11h55","play_off":"","game":"EASTERN PROVINCE B vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"5","age_group":"16","time":"13h00 – 13h55","play_off":"","game":"BORDER INLAND vs BOLAND B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"6","age_group":"16","time":"14h00 – 14h55","play_off":"","game":"BOLAND C vs BOLAND D","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"7","age_group":"16","time":"15h00 – 15h55","play_off":"","game":"NORTHERN CAPE B vs SFS C","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WOODRIDGE","match_number":"8","age_group":"16","time":"16h00 – 16h55","play_off":"","game":"EASTERN PROVINCE C vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"9","age_group":"16","time":"08h00 – 08h55","play_off":"","game":"BORDER INLAND vs BOLAND D","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"10","age_group":"16","time":"09h00 – 09h55","play_off":"","game":"BOLAND B vs BOLAND C","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"11","age_group":"16","time":"10h00 – 10h55","play_off":"","game":"NORTHERN CAPE B vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"12","age_group":"16","time":"11h00 – 11h55","play_off":"","game":"EASTERN PROVINCE C vs SFS C","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"13","age_group":"14","time":"13h00 – 13h55","play_off":"","game":"BORDER INLAND vs WP B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"14","age_group":"14","time":"14h00 – 14h55","play_off":"","game":"BOLAND B vs BOLAND C","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"15","age_group":"14","time":"15h00 – 15h55","play_off":"","game":"NORTHERN CAPE B C vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"16","age_group":"14","time":"16h00 – 16h55","play_off":"","game":"SFS B vs EASTERN PROVINCE B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"17","age_group":"18","time":"09h00 – 09h55","play_off":"","game":"BORDER INLAND vs EP B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"18","age_group":"18","time":"10h00 – 10h55","play_off":"","game":"BOLAND B vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"19","age_group":"18","time":"11h00 – 11h55","play_off":"","game":"N CAPE B vs SFS C","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"20","age_group":"18","time":"13h00 – 13h55","play_off":"","game":"BORDER INLAND vs BOLAND B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"21","age_group":"18","time":"14h00 – 14h55","play_off":"","game":"SFS C vs EDEN B","umpire":""},{"day":"Day 1","date":"28 June 2026","venue":"VICTORIA PARK HIGH","match_number":"22","age_group":"18","time":"15h00 – 15h55","play_off":"","game":"N CAPE B vs EP B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"23","age_group":"16","time":"08h00 – 08h55","play_off":"","game":"BORDER INLAND vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"24","age_group":"16","time":"09h00 – 09h55","play_off":"","game":"BOLAND C vs SFS C","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"25","age_group":"16","time":"10h00 – 10h55","play_off":"","game":"BOLAND D vs NORTHERN CAPE B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"26","age_group":"16","time":"11h00 – 11h55","play_off":"","game":"EASTERN PROVINCE C vs BOLAND B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"27","age_group":"18","time":"13h00 – 13h55","play_off":"","game":"N CAPE B vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"28","age_group":"18","time":"14h00 – 14h55","play_off":"","game":"BOLAND B vs EP B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"29","age_group":"18","time":"15h00 – 15h55","play_off":"","game":"BORDER INLAND vs SFS C","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"","age_group":"","time":"16h00 – 16h55","play_off":"","game":"","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"","age_group":"","time":"08h00 – 08h55","play_off":"","game":"","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"30","age_group":"18","time":"09h00 – 09h55","play_off":"","game":"N CAPE B vs BOLAND B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"31","age_group":"18","time":"10h00 – 10h55","play_off":"","game":"BORDER INLAND vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"32","age_group":"18","time":"11h00 – 11h55","play_off":"","game":"SFS C vs EP B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"33","age_group":"16","time":"13h00 – 13h55","play_off":"","game":"BORDER INLAND vs SFS C","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"34","age_group":"16","time":"14h00 – 14h55","play_off":"","game":"BOLAND C vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"35","age_group":"16","time":"15h00 – 15h55","play_off":"","game":"NORTHERN CAPE vs BOLAND B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"36","age_group":"16","time":"16h00 – 16h55","play_off":"","game":"EASTERN PROVINCE C vs BOLAND D","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"37","age_group":"14","time":"08h00 – 08h55","play_off":"","game":"BOLAND B vs NORTHERN CAPE B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"38","age_group":"14","time":"09h00 – 09h55","play_off":"","game":"BOLAND C vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"39","age_group":"14","time":"10h00 – 10h55","play_off":"","game":"BORDER INLAND vs SFS B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"40","age_group":"14","time":"11h00 – 11h55","play_off":"","game":"EASTERN PROVINCE B vs WP B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"","age_group":"","time":"12h00 – 12h55","play_off":"","game":"LUNCH BREAK","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"41","age_group":"14","time":"13h00 – 13h55","play_off":"","game":"BORDER INLAND vs EDEN B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"42","age_group":"14","time":"14h00 – 14h55","play_off":"","game":"NORTHERN CAPE B vs WP B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"43","age_group":"14","time":"15h00 – 15h55","play_off":"","game":"BOLAND C vs SFS B","umpire":""},{"day":"Day 2","date":"29 June 2026","venue":"VICTORIA PARK HIGH","match_number":"44","age_group":"14","time":"16h00 – 16h55","play_off":"","game":"EASTERN PROVINCE vs BOLAND B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"45","age_group":"14","time":"08h00 – 08h55","play_off":"3rd/4th","game":"2nd Pool A vs 2nd Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"46","age_group":"16","time":"09h00 – 09h55","play_off":"3rd/4th","game":"2nd Pool A vs 2nd Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"47","age_group":"18","time":"10h00 – 10h55","play_off":"","game":"BOLAND B vs SFS C","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"48","age_group":"14","time":"11h00 – 11h55","play_off":"1st/2nd","game":"1st Pool A vs 1st Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"49","age_group":"16","time":"12h00 – 12h55","play_off":"1st/2nd","game":"1st Pool A vs 1st Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"50","age_group":"18","time":"13h00 – 13h55","play_off":"","game":"EP B vs EDEN","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WOODRIDGE COLLEGE","match_number":"","age_group":"","time":"","play_off":"","game":"PRIZE GIVING","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"51","age_group":"14","time":"08h00 – 08h55","play_off":"7th/8th","game":"4th Pool A vs 4th Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"52","age_group":"16","time":"09h00 – 09h55","play_off":"7th/8th","game":"4th Pool A vs 4th Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"53","age_group":"18","time":"10h00 – 10h55","play_off":"","game":"BORDER vs N CAPE B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"54","age_group":"14","time":"11h00 – 11h55","play_off":"5th/6th","game":"3rd Pool A vs 3rd Pool B","umpire":""},{"day":"Day 3","date":"30 June 2026","venue":"WESTERING HIGH SCHOOL","match_number":"55","age_group":"16","time":"12h00 – 12h55","play_off":"5/6th","game":"3rd Pool A vs 3rd Pool B","umpire":""}];
+    const TEAM_ROWS = [{"age_group":"BOYS UNDER 14","pool":"POOL A","team":"BORDER"},{"age_group":"BOYS UNDER 14","pool":"POOL B","team":"BOLAND B"},{"age_group":"BOYS UNDER 16","pool":"POOL A","team":"BORDER"},{"age_group":"BOYS UNDER 16","pool":"POOL B","team":"BOLAND B"},{"age_group":"BOYS UNDER 18","pool":"SINGLE POOL","team":"BOLAND B"},{"age_group":"BOYS UNDER 14","pool":"POOL A","team":"BOLAND C"},{"age_group":"BOYS UNDER 14","pool":"POOL B","team":"WP B"},{"age_group":"BOYS UNDER 16","pool":"POOL A","team":"BOLAND C"},{"age_group":"BOYS UNDER 16","pool":"POOL B","team":"BOLAND D"},{"age_group":"BOYS UNDER 18","pool":"SINGLE POOL","team":"NORTHERN CAPE B"},{"age_group":"BOYS UNDER 14","pool":"POOL A","team":"N CAPE B"},{"age_group":"BOYS UNDER 14","pool":"POOL B","team":"SFS B"},{"age_group":"BOYS UNDER 16","pool":"POOL A","team":"N CAPE B"},{"age_group":"BOYS UNDER 16","pool":"POOL B","team":"SFS C"},{"age_group":"BOYS UNDER 18","pool":"SINGLE POOL","team":"SOUTHERN FS C"},{"age_group":"BOYS UNDER 14","pool":"POOL A","team":"EP B"},{"age_group":"BOYS UNDER 14","pool":"POOL B","team":"EDEN B"},{"age_group":"BOYS UNDER 16","pool":"POOL A","team":"EP C"},{"age_group":"BOYS UNDER 16","pool":"POOL B","team":"EDEN B"},{"age_group":"BOYS UNDER 18","pool":"SINGLE POOL","team":"EASTERN PROVINCE B"},{"age_group":"BOYS UNDER 14","pool":"POOL A","team":"EDEN B"}];
+
+    const ageGroupFilter = document.getElementById("age-group-filter");
+    const poolFilter = document.getElementById("pool-filter");
+    const teamFilter = document.getElementById("team-filter");
+    const resetFiltersButton = document.getElementById("reset-filters");
+    const statusElement = document.getElementById("status");
+    const fixtureListElement = document.getElementById("fixture-list");
+
+    let teamLookupByAgeGroup = {};
+    let fixtures = [];
+    const MONTH_INDEXES = {
+      JANUARY: 0,
+      FEBRUARY: 1,
+      MARCH: 2,
+      APRIL: 3,
+      MAY: 4,
+      JUNE: 5,
+      JULY: 6,
+      AUGUST: 7,
+      SEPTEMBER: 8,
+      OCTOBER: 9,
+      NOVEMBER: 10,
+      DECEMBER: 11
+    };
+
+    function normalize(value) {
+      return value
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    }
+
+    function parseCsv(text) {
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      const headers = lines.shift().split(",").map((header) => header.trim());
+
+      return lines.map((line) => {
+        const columns = line.split(",");
+        return headers.reduce((record, header, index) => {
+          record[header] = (columns[index] || "").trim();
+          return record;
+        }, {});
+      });
+    }
+
+    function parseFixtureDateTime(dateValue, timeValue) {
+      const startTime = timeValue.split("–")[0].trim();
+      const timeMatch = startTime.match(/^(\d{1,2})h(\d{2})$/);
+      const dateMatch = dateValue.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+
+      if (!timeMatch || !dateMatch) {
+        return null;
+      }
+
+      const [, day, monthName, year] = dateMatch;
+      const monthIndex = MONTH_INDEXES[monthName.toUpperCase()];
+
+      if (monthIndex === undefined) {
+        return null;
+      }
+
+      return new Date(
+        Number(year),
+        monthIndex,
+        Number(day),
+        Number(timeMatch[1]),
+        Number(timeMatch[2])
+      );
+    }
+
+    function buildTeamLookup(rows) {
+      return rows.reduce((lookup, row) => {
+        const ageGroup = row.age_group.replace("BOYS UNDER ", "");
+        const normalizedTeam = normalize(row.team);
+
+        lookup[ageGroup] = lookup[ageGroup] || {};
+
+        if (!lookup[ageGroup][normalizedTeam]) {
+          lookup[ageGroup][normalizedTeam] = {
+            team: row.team,
+            pools: new Set()
+          };
+        }
+
+        lookup[ageGroup][normalizedTeam].pools.add(row.pool);
+        return lookup;
+      }, {});
+    }
+
+    function addTeamMeta(meta, teams, pools) {
+      if (!meta) {
+        return;
+      }
+
+      teams.set(normalize(meta.team), meta.team);
+      meta.pools.forEach((pool) => pools.add(pool));
+    }
+
+    function extractFixtureMeta(ageGroup, game) {
+      const teams = new Map();
+      const pools = new Set();
+      const teamLookup = teamLookupByAgeGroup[ageGroup] || {};
+      const aliases = TEAM_ALIASES[ageGroup] || {};
+
+      game.split(/\s+vs\s+/i).map((side) => side.trim()).filter(Boolean).forEach((side) => {
+        const normalizedSide = normalize(side);
+        const directMeta = teamLookup[normalizedSide];
+        const alias = aliases[normalizedSide];
+        const aliasMeta = alias ? teamLookup[normalize(alias)] : null;
+        const matchedMeta = directMeta || aliasMeta;
+
+        addTeamMeta(matchedMeta, teams, pools);
+
+        const mentionsPoolA = normalizedSide.includes("POOL A");
+        const mentionsPoolB = normalizedSide.includes("POOL B");
+        const mentionsSinglePool = normalizedSide.includes("SINGLE POOL");
+
+        if (mentionsPoolA) {
+          pools.add("POOL A");
+        }
+
+        if (mentionsPoolB) {
+          pools.add("POOL B");
+        }
+
+        if (mentionsSinglePool) {
+          pools.add("SINGLE POOL");
+        }
+
+        if (!matchedMeta && !mentionsPoolA && !mentionsPoolB && !mentionsSinglePool) {
+          teams.set(normalize(alias || side), alias || side);
+
+          if (ageGroup === "18") {
+            pools.add("SINGLE POOL");
+          }
+        }
+      });
+
+      if (!teams.size && ageGroup === "18") {
+        pools.add("SINGLE POOL");
+      }
+
+      return {
+        teams: Array.from(teams.values()).sort(),
+        pools: Array.from(pools).sort()
+      };
+    }
+
+    function formatFixtureDateTime(dateTime) {
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(dateTime);
+    }
+
+    function populateSelect(select, options, placeholder, selectedValue) {
+      select.innerHTML = "";
+
+      const placeholderOption = document.createElement("option");
+      placeholderOption.value = "";
+      placeholderOption.textContent = placeholder;
+      select.appendChild(placeholderOption);
+
+      options.forEach((option) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = option.value;
+        optionElement.textContent = option.label;
+        optionElement.selected = option.value === selectedValue;
+        select.appendChild(optionElement);
+      });
+
+      if (!options.some((option) => option.value === selectedValue)) {
+        select.value = "";
+      }
+    }
+
+    function updateFilterOptions() {
+      const selectedAgeGroup = ageGroupFilter.value;
+      const fixturesForAgeGroup = selectedAgeGroup
+        ? fixtures.filter((fixture) => fixture.ageGroup === selectedAgeGroup)
+        : fixtures;
+
+      const availablePools = Array.from(new Set(fixturesForAgeGroup.flatMap((fixture) => fixture.pools))).sort();
+      const availableTeams = Array.from(new Set(fixturesForAgeGroup.flatMap((fixture) => fixture.teams))).sort();
+
+      populateSelect(
+        poolFilter,
+        availablePools.map((pool) => ({ value: pool, label: pool })),
+        "All pools",
+        poolFilter.value
+      );
+
+      populateSelect(
+        teamFilter,
+        availableTeams.map((team) => ({ value: team, label: team })),
+        "All teams",
+        teamFilter.value
+      );
+    }
+
+    function renderFixtures() {
+      const now = new Date();
+      const selectedAgeGroup = ageGroupFilter.value;
+      const selectedPool = poolFilter.value;
+      const selectedTeam = teamFilter.value;
+
+      const filteredFixtures = fixtures.filter((fixture) => {
+        if (fixture.dateTime < now) {
+          return false;
+        }
+
+        if (selectedAgeGroup && fixture.ageGroup !== selectedAgeGroup) {
+          return false;
+        }
+
+        if (selectedPool && !fixture.pools.includes(selectedPool)) {
+          return false;
+        }
+
+        if (selectedTeam && !fixture.teams.includes(selectedTeam)) {
+          return false;
+        }
+
+        return true;
+      });
+
+      statusElement.textContent = `${filteredFixtures.length} upcoming fixture${filteredFixtures.length === 1 ? "" : "s"} shown`;
+      fixtureListElement.innerHTML = "";
+
+      if (!filteredFixtures.length) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "message";
+        emptyState.textContent = "No upcoming fixtures match the current filters.";
+        fixtureListElement.appendChild(emptyState);
+        return;
+      }
+
+      filteredFixtures.forEach((fixture) => {
+        const article = document.createElement("article");
+        article.className = "fixture-card";
+
+        const teamSummary = fixture.teams.length ? fixture.teams.join(", ") : "Pool placement fixture";
+        const poolSummary = fixture.pools.length ? fixture.pools.join(" • ") : "Pool not available";
+
+        article.innerHTML = `
+          <div class="fixture-top">
+            <h2 class="fixture-title">${fixture.game}</h2>
+            <span class="badge accent">${fixture.day}</span>
+          </div>
+          <div class="badge-row">
+            <span class="badge">${fixture.ageGroupLabel}</span>
+            <span class="badge">${poolSummary}</span>
+            ${fixture.playOff ? `<span class="badge">${fixture.playOff}</span>` : ""}
+          </div>
+          <div class="fixture-details">
+            <div><strong>Starts:</strong> ${formatFixtureDateTime(fixture.dateTime)}</div>
+            <div><strong>Venue:</strong> ${fixture.venue}</div>
+            <div><strong>Match:</strong> ${fixture.matchNumber || "TBC"}</div>
+            <div><strong>Teams:</strong> ${teamSummary}</div>
+          </div>
+        `;
+
+        fixtureListElement.appendChild(article);
+      });
+    }
+
+    function loadFixtures() {
+      try {
+        teamLookupByAgeGroup = buildTeamLookup(TEAM_ROWS);
+
+        fixtures = FIXTURE_ROWS
+          .filter((row) => row.game && /\s+vs\s+/i.test(row.game))
+          .map((row) => {
+            const dateTime = parseFixtureDateTime(row.date, row.time);
+            const ageGroup = row.age_group;
+            const meta = extractFixtureMeta(ageGroup, row.game);
+
+            return {
+              day: row.day,
+              dateTime,
+              venue: row.venue,
+              matchNumber: row.match_number,
+              ageGroup,
+              ageGroupLabel: AGE_GROUP_LABELS[ageGroup] || row.age_group,
+              playOff: row.play_off,
+              game: row.game,
+              teams: meta.teams,
+              pools: meta.pools
+            };
+          })
+          .filter((fixture) => fixture.dateTime !== null && !Number.isNaN(fixture.dateTime.valueOf()))
+          .sort((left, right) => left.dateTime - right.dateTime);
+
+        populateSelect(
+          ageGroupFilter,
+          Object.entries(AGE_GROUP_LABELS).map(([value, label]) => ({ value, label })),
+          "All age groups",
+          ageGroupFilter.value
+        );
+
+        updateFilterOptions();
+        renderFixtures();
+      } catch (error) {
+        statusElement.textContent = "Unable to load fixtures";
+        fixtureListElement.innerHTML = `<div class="message">${error.message}</div>`;
+      }
+    }
+
+    ageGroupFilter.addEventListener("change", () => {
+      updateFilterOptions();
+      renderFixtures();
+    });
+
+    poolFilter.addEventListener("change", renderFixtures);
+    teamFilter.addEventListener("change", renderFixtures);
+
+    resetFiltersButton.addEventListener("click", () => {
+      ageGroupFilter.value = "";
+      poolFilter.value = "";
+      teamFilter.value = "";
+      updateFilterOptions();
+      renderFixtures();
+    });
+
+    loadFixtures();
+  </script>
+</body>
+</html>
