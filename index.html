@@ -50,20 +50,23 @@
       margin-bottom: 1rem;
     }
 
-    .hero > summary {
+    .hero > details > summary {
       cursor: pointer;
       list-style: none;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.2;
     }
 
-    .hero > summary::-webkit-details-marker {
+    .hero > details > summary::-webkit-details-marker {
       display: none;
     }
 
-    .hero > summary::after {
+    .hero > details > summary::after {
       content: "▼";
       font-size: 0.75rem;
       color: var(--muted);
@@ -71,13 +74,8 @@
       transition: transform 0.2s;
     }
 
-    .hero[open] > summary::after {
+    .hero > details[open] > summary::after {
       transform: rotate(180deg);
-    }
-
-    .hero h1 {
-      margin: 0;
-      font-size: clamp(1.75rem, 4vw, 2.5rem);
     }
 
     .hero p {
@@ -243,14 +241,14 @@
 </head>
 <body>
   <main>
-    <details class="hero" role="banner">
-      <summary>
-        <h1>SASHOC South Boys Regional Fixtures</h1>
-      </summary>
-      <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
-    </details>
+    <header class="hero" role="banner">
+      <details>
+        <summary>SASHOC South Boys Regional Fixtures</summary>
+        <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
+      </details>
+    </header>
 
-    <details class="filters" aria-label="Fixture filters">
+    <details class="filters">
       <summary>Filters</summary>
       <div class="filter-grid">
         <label for="age-group-filter">
