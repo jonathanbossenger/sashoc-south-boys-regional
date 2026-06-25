@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SASHOC South Boys Regional Fixtures</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f4f7fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f8;
+      --border: #d5dee8;
+      --text: #16324f;
+      --muted: #577089;
+      --accent: #0052cc;
+      --accent-soft: #d9e8ff;
+      --shadow: 0 12px 30px rgba(22, 50, 79, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 72rem);
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .hero,
+    .filters,
+    .fixture-card,
+    .message {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .filters {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    select,
+    button {
+      width: 100%;
+      min-height: 2.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      font: inherit;
+    }
+
+    select {
+      padding: 0 0.85rem;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    button {
+      padding: 0.85rem 1rem;
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      align-self: end;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: #003e9b;
+    }
+
+    .status {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .fixture-list {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .fixture-card {
+      padding: 1rem;
+    }
+
+    .fixture-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .fixture-title {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .badge.accent {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .fixture-details {
+      display: grid;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .message {
+      padding: 1rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (min-width: 48rem) {
+      main {
+        padding: 2rem 1.5rem 3rem;
+      }
+
+      .filter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>SASHOC South Boys Regional Fixtures</h1>
+      <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
+    </section>
+
+    <section class="filters" aria-label="Fixture filters">
+      <div class="filter-grid">
+        <label for="age-group-filter">
+          Age group
+          <select id="age-group-filter">
+            <option value="">All age groups</option>
+          </select>
+        </label>
+
+        <label for="pool-filter">
+          Pool
+          <select id="pool-filter">
+            <option value="">All pools</option>
+          </select>
+        </label>
+
+        <label for="team-filter">
+          Team
+          <select id="team-filter">
+            <option value="">All teams</option>
+          </select>
+        </label>
+
+        <label>
+          Reset filters
+          <button id="reset-filters" type="button">Show all upcoming fixtures</button>
+        </label>
+      </div>
+    </section>
+
+    <p id="status" class="status" aria-live="polite">Loading fixtures…</p>
+    <section id="fixture-list" class="fixture-list" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const AGE_GROUP_LABELS = {
+      "14": "Boys Under 14",
+      "16": "Boys Under 16",
+      "18": "Boys Under 18"
+    };
+
+    const TEAM_ALIASES = {
+      "14": {
+        "BORDER INLAND": "BORDER",
+        "EASTERN PROVINCE B": "EP B",
+        "EASTERN PROVINCE": "EP B",
+        "NORTHERN CAPE B": "N CAPE B",
+        "NORTHERN CAPE B C": "N CAPE B",
+        "WESTERN PROVINCE": "WP B"
+      },
+      "16": {
+        "BORDER INLAND": "BORDER",
+        "EASTERN PROVINCE C": "EP C",
+        "NORTHERN CAPE": "N CAPE B",
+        "NORTHERN CAPE B": "N CAPE B"
+      },
+      "18": {
+        "BORDER": "BORDER INLAND",
+        "EP B": "EASTERN PROVINCE B",
+        "N CAPE B": "NORTHERN CAPE B",
+        "SFS C": "SOUTHERN FS C",
+        "EDEN": "EDEN B"
+      }
+    };
+
+    const ageGroupFilter = document.getElementById("age-group-filter");
+    const poolFilter = document.getElementById("pool-filter");
+    const teamFilter = document.getElementById("team-filter");
+    const resetFiltersButton = document.getElementById("reset-filters");
+    const statusElement = document.getElementById("status");
+    const fixtureListElement = document.getElementById("fixture-list");
+
+    let teamLookupByAgeGroup = {};
+    let fixtures = [];
+
+    function normalize(value) {
+      return value
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    }
+
+    function parseCsv(text) {
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      const headers = lines.shift().split(",").map((header) => header.trim());
+
+      return lines.map((line) => {
+        const columns = line.split(",");
+        return headers.reduce((record, header, index) => {
+          record[header] = (columns[index] || "").trim();
+          return record;
+        }, {});
+      });
+    }
+
+    function parseFixtureDateTime(dateValue, timeValue) {
+      const startTime = timeValue.split("–")[0].trim();
+      const [hours, minutes] = startTime.replace("h", ":").split(":");
+
+      if (!dateValue || !hours || !minutes) {
+        return null;
+      }
+
+      return new Date(`${dateValue} ${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`);
+    }
+
+    function buildTeamLookup(rows) {
+      return rows.reduce((lookup, row) => {
+        const ageGroup = row.age_group.replace("BOYS UNDER ", "");
+        const normalizedTeam = normalize(row.team);
+
+        lookup[ageGroup] = lookup[ageGroup] || {};
+
+        if (!lookup[ageGroup][normalizedTeam]) {
+          lookup[ageGroup][normalizedTeam] = {
+            team: row.team,
+            pools: new Set()
+          };
+        }
+
+        lookup[ageGroup][normalizedTeam].pools.add(row.pool);
+        return lookup;
+      }, {});
+    }
+
+    function addTeamMeta(meta, teams, pools) {
+      if (!meta) {
+        return;
+      }
+
+      teams.add(meta.team);
+      meta.pools.forEach((pool) => pools.add(pool));
+    }
+
+    function extractFixtureMeta(ageGroup, game) {
+      const teams = new Set();
+      const pools = new Set();
+      const teamLookup = teamLookupByAgeGroup[ageGroup] || {};
+      const aliases = TEAM_ALIASES[ageGroup] || {};
+
+      game.split(/\s+vs\s+/i).map((side) => side.trim()).filter(Boolean).forEach((side) => {
+        const normalizedSide = normalize(side);
+        const directMeta = teamLookup[normalizedSide];
+        const alias = aliases[normalizedSide];
+        const aliasMeta = alias ? teamLookup[normalize(alias)] : null;
+        const matchedMeta = directMeta || aliasMeta;
+
+        addTeamMeta(matchedMeta, teams, pools);
+
+        const mentionsPoolA = normalizedSide.includes("POOL A");
+        const mentionsPoolB = normalizedSide.includes("POOL B");
+        const mentionsSinglePool = normalizedSide.includes("SINGLE POOL");
+
+        if (mentionsPoolA) {
+          pools.add("POOL A");
+        }
+
+        if (mentionsPoolB) {
+          pools.add("POOL B");
+        }
+
+        if (mentionsSinglePool) {
+          pools.add("SINGLE POOL");
+        }
+
+        if (!matchedMeta && !mentionsPoolA && !mentionsPoolB && !mentionsSinglePool) {
+          teams.add(alias || side);
+
+          if (ageGroup === "18") {
+            pools.add("SINGLE POOL");
+          }
+        }
+      });
+
+      if (!teams.size && ageGroup === "18") {
+        pools.add("SINGLE POOL");
+      }
+
+      return {
+        teams: Array.from(teams).sort(),
+        pools: Array.from(pools).sort()
+      };
+    }
+
+    function formatFixtureDateTime(dateTime) {
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(dateTime);
+    }
+
+    function populateSelect(select, options, placeholder, selectedValue) {
+      select.innerHTML = "";
+
+      const placeholderOption = document.createElement("option");
+      placeholderOption.value = "";
+      placeholderOption.textContent = placeholder;
+      select.appendChild(placeholderOption);
+
+      options.forEach((option) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = option.value;
+        optionElement.textContent = option.label;
+        optionElement.selected = option.value === selectedValue;
+        select.appendChild(optionElement);
+      });
+
+      if (!options.some((option) => option.value === selectedValue)) {
+        select.value = "";
+      }
+    }
+
+    function updateFilterOptions() {
+      const selectedAgeGroup = ageGroupFilter.value;
+      const fixturesForAgeGroup = selectedAgeGroup
+        ? fixtures.filter((fixture) => fixture.ageGroup === selectedAgeGroup)
+        : fixtures;
+
+      const availablePools = Array.from(new Set(fixturesForAgeGroup.flatMap((fixture) => fixture.pools))).sort();
+      const availableTeams = Array.from(new Set(fixturesForAgeGroup.flatMap((fixture) => fixture.teams))).sort();
+
+      populateSelect(
+        poolFilter,
+        availablePools.map((pool) => ({ value: pool, label: pool })),
+        "All pools",
+        poolFilter.value
+      );
+
+      populateSelect(
+        teamFilter,
+        availableTeams.map((team) => ({ value: team, label: team })),
+        "All teams",
+        teamFilter.value
+      );
+    }
+
+    function renderFixtures() {
+      const now = new Date();
+      const selectedAgeGroup = ageGroupFilter.value;
+      const selectedPool = poolFilter.value;
+      const selectedTeam = teamFilter.value;
+
+      const filteredFixtures = fixtures.filter((fixture) => {
+        if (fixture.dateTime < now) {
+          return false;
+        }
+
+        if (selectedAgeGroup && fixture.ageGroup !== selectedAgeGroup) {
+          return false;
+        }
+
+        if (selectedPool && !fixture.pools.includes(selectedPool)) {
+          return false;
+        }
+
+        if (selectedTeam && !fixture.teams.includes(selectedTeam)) {
+          return false;
+        }
+
+        return true;
+      });
+
+      statusElement.textContent = `${filteredFixtures.length} upcoming fixture${filteredFixtures.length === 1 ? "" : "s"} shown`;
+      fixtureListElement.innerHTML = "";
+
+      if (!filteredFixtures.length) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "message";
+        emptyState.textContent = "No upcoming fixtures match the current filters.";
+        fixtureListElement.appendChild(emptyState);
+        return;
+      }
+
+      filteredFixtures.forEach((fixture) => {
+        const article = document.createElement("article");
+        article.className = "fixture-card";
+
+        const teamSummary = fixture.teams.length ? fixture.teams.join(", ") : "Pool placement fixture";
+        const poolSummary = fixture.pools.length ? fixture.pools.join(" • ") : "Pool not available";
+
+        article.innerHTML = `
+          <div class="fixture-top">
+            <h2 class="fixture-title">${fixture.game}</h2>
+            <span class="badge accent">${fixture.day}</span>
+          </div>
+          <div class="badge-row">
+            <span class="badge">${fixture.ageGroupLabel}</span>
+            <span class="badge">${poolSummary}</span>
+            ${fixture.playOff ? `<span class="badge">${fixture.playOff}</span>` : ""}
+          </div>
+          <div class="fixture-details">
+            <div><strong>Starts:</strong> ${formatFixtureDateTime(fixture.dateTime)}</div>
+            <div><strong>Venue:</strong> ${fixture.venue}</div>
+            <div><strong>Match:</strong> ${fixture.matchNumber || "TBC"}</div>
+            <div><strong>Teams:</strong> ${teamSummary}</div>
+          </div>
+        `;
+
+        fixtureListElement.appendChild(article);
+      });
+    }
+
+    async function loadFixtures() {
+      try {
+        const [fixturesResponse, teamsResponse] = await Promise.all([
+          fetch("./fixtures.csv"),
+          fetch("./participating-teams.csv")
+        ]);
+
+        if (!fixturesResponse.ok || !teamsResponse.ok) {
+          throw new Error("Unable to load fixture data.");
+        }
+
+        const [fixturesCsv, teamsCsv] = await Promise.all([
+          fixturesResponse.text(),
+          teamsResponse.text()
+        ]);
+
+        const teamRows = parseCsv(teamsCsv);
+        teamLookupByAgeGroup = buildTeamLookup(teamRows);
+
+        fixtures = parseCsv(fixturesCsv)
+          .filter((row) => row.game && /\s+vs\s+/i.test(row.game))
+          .map((row) => {
+            const dateTime = parseFixtureDateTime(row.date, row.time);
+            const ageGroup = row.age_group;
+            const meta = extractFixtureMeta(ageGroup, row.game);
+
+            return {
+              day: row.day,
+              dateTime,
+              venue: row.venue,
+              matchNumber: row.match_number,
+              ageGroup,
+              ageGroupLabel: AGE_GROUP_LABELS[ageGroup] || row.age_group,
+              playOff: row.play_off,
+              game: row.game,
+              teams: meta.teams,
+              pools: meta.pools
+            };
+          })
+          .filter((fixture) => fixture.dateTime instanceof Date && !Number.isNaN(fixture.dateTime.valueOf()))
+          .sort((left, right) => left.dateTime - right.dateTime);
+
+        populateSelect(
+          ageGroupFilter,
+          Object.entries(AGE_GROUP_LABELS).map(([value, label]) => ({ value, label })),
+          "All age groups",
+          ageGroupFilter.value
+        );
+
+        updateFilterOptions();
+        renderFixtures();
+      } catch (error) {
+        statusElement.textContent = "Unable to load fixtures";
+        fixtureListElement.innerHTML = `<div class="message">${error.message}</div>`;
+      }
+    }
+
+    ageGroupFilter.addEventListener("change", () => {
+      updateFilterOptions();
+      renderFixtures();
+    });
+
+    poolFilter.addEventListener("change", renderFixtures);
+    teamFilter.addEventListener("change", renderFixtures);
+
+    resetFiltersButton.addEventListener("click", () => {
+      ageGroupFilter.value = "";
+      poolFilter.value = "";
+      teamFilter.value = "";
+      updateFilterOptions();
+      renderFixtures();
+    });
+
+    loadFixtures();
+  </script>
+</body>
+</html>
