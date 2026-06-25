@@ -50,13 +50,38 @@
       margin-bottom: 1rem;
     }
 
+    .hero > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .hero > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .hero > summary::after {
+      content: "▼";
+      font-size: 0.75rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .hero[open] > summary::after {
+      transform: rotate(180deg);
+    }
+
     .hero h1 {
-      margin: 0 0 0.5rem;
+      margin: 0;
       font-size: clamp(1.75rem, 4vw, 2.5rem);
     }
 
     .hero p {
-      margin: 0;
+      margin: 0.75rem 0 0;
       color: var(--muted);
       line-height: 1.5;
     }
@@ -64,6 +89,37 @@
     .filters {
       padding: 1rem;
       margin-bottom: 1rem;
+    }
+
+    .filters > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .filters > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .filters > summary::after {
+      content: "▼";
+      font-size: 0.75rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .filters[open] > summary::after {
+      transform: rotate(180deg);
+    }
+
+    .filters > .filter-grid {
+      margin-top: 0.75rem;
     }
 
     .filter-grid {
@@ -187,12 +243,15 @@
 </head>
 <body>
   <main>
-    <header class="hero" role="banner">
-      <h1>SASHOC South Boys Regional Fixtures</h1>
+    <details class="hero" role="banner">
+      <summary>
+        <h1>SASHOC South Boys Regional Fixtures</h1>
+      </summary>
       <p>Track upcoming fixtures on any device. Results are filtered using your local date and time, so only matches that have not started yet are shown.</p>
-    </header>
+    </details>
 
-    <section class="filters" aria-label="Fixture filters">
+    <details class="filters" aria-label="Fixture filters">
+      <summary>Filters</summary>
       <div class="filter-grid">
         <label for="age-group-filter">
           Age group
@@ -220,7 +279,7 @@
           <button id="reset-filters" type="button">Show all upcoming fixtures</button>
         </label>
       </div>
-    </section>
+    </details>
 
     <p id="status" class="status" aria-live="polite">Loading fixtures…</p>
     <section id="fixture-list" class="fixture-list" aria-live="polite"></section>
