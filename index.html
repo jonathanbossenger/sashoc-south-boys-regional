@@ -442,7 +442,17 @@
 
     function loadSavedFilters() {
       try {
-        return JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY)) || {};
+        const savedFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY));
+
+        if (!savedFilters || typeof savedFilters !== "object" || Array.isArray(savedFilters)) {
+          return {};
+        }
+
+        return {
+          ageGroup: typeof savedFilters.ageGroup === "string" ? savedFilters.ageGroup : undefined,
+          pool: typeof savedFilters.pool === "string" ? savedFilters.pool : undefined,
+          team: typeof savedFilters.team === "string" ? savedFilters.team : undefined
+        };
       } catch (error) {
         console.warn("Unable to restore saved filters.", error);
         return {};
@@ -608,7 +618,15 @@
         );
 
         restoreSavedFilters(savedFilters);
-        saveFilters();
+
+        if (
+          ageGroupFilter.value !== (savedFilters.ageGroup ?? "") ||
+          poolFilter.value !== (savedFilters.pool ?? "") ||
+          teamFilter.value !== (savedFilters.team ?? "")
+        ) {
+          saveFilters();
+        }
+
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
