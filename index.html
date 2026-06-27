@@ -468,7 +468,7 @@
       const nextValue = typeof value === "string" ? value : "";
       select.value = nextValue;
 
-      // Browsers keep the previous empty selection when the assigned value doesn't match an option.
+      // Browsers keep the previous selection when the assigned value doesn't match an option.
       if (select.value !== nextValue) {
         select.value = "";
       }
@@ -498,7 +498,7 @@
       );
     }
 
-    function restoreSavedFilters(savedFilters) {
+    function restoreSavedFilters(savedFilters = {}) {
       restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
       updateFilterOptions();
       restoreSelectValue(poolFilter, savedFilters.pool);
