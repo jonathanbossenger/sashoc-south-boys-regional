@@ -269,6 +269,7 @@
 
     let teamLookupByAgeGroup = {};
     let fixtures = [];
+    const DEFAULT_FILTER_VALUE = "";
     const FILTER_STORAGE_KEY = "sashoc-south-boys-regional-filters";
     const MONTH_INDEXES = {
       JANUARY: 0,
@@ -481,12 +482,12 @@
     }
 
     function restoreSelectValue(select, value) {
-      const nextValue = typeof value === "string" ? value : "";
+      const nextValue = typeof value === "string" ? value : DEFAULT_FILTER_VALUE;
       select.value = nextValue;
 
       // Browsers keep the previous selection when the assigned value doesn't match an option.
       if (select.value !== nextValue) {
-        select.value = "";
+        select.value = DEFAULT_FILTER_VALUE;
       }
     }
 
@@ -515,6 +516,7 @@
     }
 
     function restoreSavedFilters(savedFilters = {}) {
+      // Age group controls which pool and team options exist, so it must be restored first.
       restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
       updateFilterOptions();
       restoreSelectValue(poolFilter, savedFilters.pool);
