@@ -465,9 +465,7 @@
     }
 
     function restoreSelectValue(select, value) {
-      if (value && Array.from(select.options).some((option) => option.value === value)) {
-        select.value = value;
-      }
+      select.value = value || "";
     }
 
     function updateFilterOptions() {
