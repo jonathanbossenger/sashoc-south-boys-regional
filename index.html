@@ -451,7 +451,7 @@
 
         const savedFilters = JSON.parse(savedFiltersValue);
 
-        if (!savedFilters || typeof savedFilters !== "object" || Array.isArray(savedFilters)) {
+        if (savedFilters === null || typeof savedFilters !== "object" || Array.isArray(savedFilters)) {
           return {};
         }
 
