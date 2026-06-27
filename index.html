@@ -473,10 +473,8 @@
       }
     }
 
-    function updateFilterOptions(savedFilters = {}) {
+    function updateFilterOptions() {
       const selectedAgeGroup = ageGroupFilter.value;
-      const selectedPool = savedFilters.pool ?? poolFilter.value;
-      const selectedTeam = savedFilters.team ?? teamFilter.value;
       const fixturesForAgeGroup = selectedAgeGroup
         ? fixtures.filter((fixture) => fixture.ageGroup === selectedAgeGroup)
         : fixtures;
@@ -488,15 +486,22 @@
         poolFilter,
         availablePools.map((pool) => ({ value: pool, label: pool })),
         "All pools",
-        selectedPool
+        poolFilter.value
       );
 
       populateSelect(
         teamFilter,
         availableTeams.map((team) => ({ value: team, label: team })),
         "All teams",
-        selectedTeam
+        teamFilter.value
       );
+    }
+
+    function restoreSavedFilters(savedFilters) {
+      restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
+      updateFilterOptions();
+      restoreSelectValue(poolFilter, savedFilters.pool);
+      restoreSelectValue(teamFilter, savedFilters.team);
     }
 
     function renderFixtures() {
@@ -603,8 +608,7 @@
           ageGroupFilter.value
         );
 
-        restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
-        updateFilterOptions(savedFilters);
+        restoreSavedFilters(savedFilters);
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
