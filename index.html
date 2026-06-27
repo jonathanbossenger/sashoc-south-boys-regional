@@ -468,6 +468,7 @@
       const nextValue = typeof value === "string" ? value : "";
       select.value = nextValue;
 
+      // Browsers keep the previous empty selection when the assigned value doesn't match an option.
       if (select.value !== nextValue) {
         select.value = "";
       }
@@ -509,8 +510,6 @@
       const selectedAgeGroup = ageGroupFilter.value;
       const selectedPool = poolFilter.value;
       const selectedTeam = teamFilter.value;
-
-      saveFilters();
 
       const filteredFixtures = fixtures.filter((fixture) => {
         if (fixture.dateTime < now) {
@@ -609,6 +608,7 @@
         );
 
         restoreSavedFilters(savedFilters);
+        saveFilters();
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
@@ -618,17 +618,26 @@
 
     ageGroupFilter.addEventListener("change", () => {
       updateFilterOptions();
+      saveFilters();
       renderFixtures();
     });
 
-    poolFilter.addEventListener("change", renderFixtures);
-    teamFilter.addEventListener("change", renderFixtures);
+    poolFilter.addEventListener("change", () => {
+      saveFilters();
+      renderFixtures();
+    });
+
+    teamFilter.addEventListener("change", () => {
+      saveFilters();
+      renderFixtures();
+    });
 
     resetFiltersButton.addEventListener("click", () => {
       ageGroupFilter.value = "";
       poolFilter.value = "";
       teamFilter.value = "";
       updateFilterOptions();
+      saveFilters();
       renderFixtures();
     });
 
