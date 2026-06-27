@@ -269,6 +269,7 @@
 
     let teamLookupByAgeGroup = {};
     let fixtures = [];
+    const FILTER_STORAGE_KEY = "sashoc-south-boys-regional-filters";
     const MONTH_INDEXES = {
       JANUARY: 0,
       FEBRUARY: 1,
@@ -439,6 +440,34 @@
       }
     }
 
+    function loadSavedFilters() {
+      try {
+        return JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY)) || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveFilters() {
+      try {
+        localStorage.setItem(
+          FILTER_STORAGE_KEY,
+          JSON.stringify({
+            ageGroup: ageGroupFilter.value,
+            pool: poolFilter.value,
+            team: teamFilter.value
+          })
+        );
+      } catch (error) {
+      }
+    }
+
+    function restoreSelectValue(select, value) {
+      if (value && Array.from(select.options).some((option) => option.value === value)) {
+        select.value = value;
+      }
+    }
+
     function updateFilterOptions() {
       const selectedAgeGroup = ageGroupFilter.value;
       const fixturesForAgeGroup = selectedAgeGroup
@@ -468,6 +497,8 @@
       const selectedAgeGroup = ageGroupFilter.value;
       const selectedPool = poolFilter.value;
       const selectedTeam = teamFilter.value;
+
+      saveFilters();
 
       const filteredFixtures = fixtures.filter((fixture) => {
         if (fixture.dateTime < now) {
@@ -531,6 +562,8 @@
 
     function loadFixtures() {
       try {
+        const savedFilters = loadSavedFilters();
+
         teamLookupByAgeGroup = buildTeamLookup(TEAM_ROWS);
 
         fixtures = FIXTURE_ROWS
@@ -560,10 +593,12 @@
           ageGroupFilter,
           Object.entries(AGE_GROUP_LABELS).map(([value, label]) => ({ value, label })),
           "All age groups",
-          ageGroupFilter.value
+          savedFilters.ageGroup
         );
 
         updateFilterOptions();
+        restoreSelectValue(poolFilter, savedFilters.pool);
+        restoreSelectValue(teamFilter, savedFilters.team);
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
