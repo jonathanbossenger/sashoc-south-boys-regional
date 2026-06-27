@@ -444,6 +444,7 @@
       try {
         return JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY)) || {};
       } catch (error) {
+        // Ignore invalid or unavailable storage and fall back to default filters.
         return {};
       }
     }
@@ -459,6 +460,7 @@
           })
         );
       } catch (error) {
+        // Ignore unavailable storage so filtering still works normally.
       }
     }
 
