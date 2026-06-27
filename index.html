@@ -324,6 +324,8 @@
 
     let teamLookupByAgeGroup = {};
     let fixtures = [];
+    const DEFAULT_FILTER_VALUE = "";
+    const FILTER_STORAGE_KEY = "sashoc-south-boys-regional-filters";
     const MONTH_INDEXES = {
       JANUARY: 0,
       FEBRUARY: 1,
@@ -494,6 +496,56 @@
       }
     }
 
+    function loadSavedFilters() {
+      try {
+        const savedFiltersValue = localStorage.getItem(FILTER_STORAGE_KEY);
+
+        if (!savedFiltersValue) {
+          return {};
+        }
+
+        const savedFilters = JSON.parse(savedFiltersValue);
+
+        if (savedFilters === null || typeof savedFilters !== "object" || Array.isArray(savedFilters)) {
+          return {};
+        }
+
+        return {
+          ageGroup: typeof savedFilters.ageGroup === "string" ? savedFilters.ageGroup : undefined,
+          pool: typeof savedFilters.pool === "string" ? savedFilters.pool : undefined,
+          team: typeof savedFilters.team === "string" ? savedFilters.team : undefined
+        };
+      } catch (error) {
+        console.warn("Unable to restore saved filters.", error);
+        return {};
+      }
+    }
+
+    function saveFilters() {
+      try {
+        localStorage.setItem(
+          FILTER_STORAGE_KEY,
+          JSON.stringify({
+            ageGroup: ageGroupFilter.value,
+            pool: poolFilter.value,
+            team: teamFilter.value
+          })
+        );
+      } catch (error) {
+        console.warn("Unable to persist fixture filters.", error);
+      }
+    }
+
+    function restoreSelectValue(select, value) {
+      const nextValue = typeof value === "string" ? value : DEFAULT_FILTER_VALUE;
+      select.value = nextValue;
+
+      // Browsers keep the previous selection when the assigned value doesn't match an option.
+      if (select.value !== nextValue) {
+        select.value = DEFAULT_FILTER_VALUE;
+      }
+    }
+
     function updateFilterOptions() {
       const selectedAgeGroup = ageGroupFilter.value;
       const fixturesForAgeGroup = selectedAgeGroup
@@ -516,6 +568,14 @@
         "All teams",
         teamFilter.value
       );
+    }
+
+    function restoreSavedFilters(savedFilters = {}) {
+      // Age group controls which pool and team options exist, so it must be restored first.
+      restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
+      updateFilterOptions();
+      restoreSelectValue(poolFilter, savedFilters.pool);
+      restoreSelectValue(teamFilter, savedFilters.team);
     }
 
     function renderFixtures() {
@@ -582,6 +642,8 @@
 
     function loadFixtures() {
       try {
+        const savedFilters = loadSavedFilters();
+
         teamLookupByAgeGroup = buildTeamLookup(TEAM_ROWS);
 
         fixtures = FIXTURE_ROWS
@@ -614,7 +676,7 @@
           ageGroupFilter.value
         );
 
-        updateFilterOptions();
+        restoreSavedFilters(savedFilters);
         renderFixtures();
       } catch (error) {
         fixtureListElement.innerHTML = `<div class="message">${error.message}</div>`;
@@ -623,17 +685,26 @@
 
     ageGroupFilter.addEventListener("change", () => {
       updateFilterOptions();
+      saveFilters();
       renderFixtures();
     });
 
-    poolFilter.addEventListener("change", renderFixtures);
-    teamFilter.addEventListener("change", renderFixtures);
+    poolFilter.addEventListener("change", () => {
+      saveFilters();
+      renderFixtures();
+    });
+
+    teamFilter.addEventListener("change", () => {
+      saveFilters();
+      renderFixtures();
+    });
 
     resetFiltersButton.addEventListener("click", () => {
       ageGroupFilter.value = "";
       poolFilter.value = "";
       teamFilter.value = "";
       updateFilterOptions();
+      saveFilters();
       renderFixtures();
     });
 
