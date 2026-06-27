@@ -442,7 +442,13 @@
 
     function loadSavedFilters() {
       try {
-        const savedFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY));
+        const savedFiltersValue = localStorage.getItem(FILTER_STORAGE_KEY);
+
+        if (!savedFiltersValue) {
+          return {};
+        }
+
+        const savedFilters = JSON.parse(savedFiltersValue);
 
         if (!savedFilters || typeof savedFilters !== "object" || Array.isArray(savedFilters)) {
           return {};
@@ -618,15 +624,6 @@
         );
 
         restoreSavedFilters(savedFilters);
-
-        if (
-          ageGroupFilter.value !== (savedFilters.ageGroup ?? "") ||
-          poolFilter.value !== (savedFilters.pool ?? "") ||
-          teamFilter.value !== (savedFilters.team ?? "")
-        ) {
-          saveFilters();
-        }
-
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
