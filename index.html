@@ -465,18 +465,18 @@
     }
 
     function restoreSelectValue(select, value) {
-      if (typeof value === "string" && value && select.querySelector(`option[value='${CSS.escape(value)}']`)) {
-        select.value = value;
-        return;
-      }
+      const nextValue = typeof value === "string" ? value : "";
+      select.value = nextValue;
 
-      select.value = "";
+      if (select.value !== nextValue) {
+        select.value = "";
+      }
     }
 
     function updateFilterOptions(savedFilters = {}) {
       const selectedAgeGroup = ageGroupFilter.value;
-      const selectedPool = savedFilters.pool !== undefined ? savedFilters.pool : poolFilter.value;
-      const selectedTeam = savedFilters.team !== undefined ? savedFilters.team : teamFilter.value;
+      const selectedPool = savedFilters.pool ?? poolFilter.value;
+      const selectedTeam = savedFilters.team ?? teamFilter.value;
       const fixturesForAgeGroup = selectedAgeGroup
         ? fixtures.filter((fixture) => fixture.ageGroup === selectedAgeGroup)
         : fixtures;
