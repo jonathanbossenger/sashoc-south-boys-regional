@@ -465,7 +465,7 @@
     }
 
     function restoreSelectValue(select, value) {
-      if (value && select.querySelector(`option[value="${CSS.escape(value)}"]`)) {
+      if (typeof value === "string" && value && select.querySelector(`option[value="${CSS.escape(value)}"]`)) {
         select.value = value;
         return;
       }
@@ -473,8 +473,10 @@
       select.value = "";
     }
 
-    function updateFilterOptions() {
+    function updateFilterOptions(savedFilters = {}) {
       const selectedAgeGroup = ageGroupFilter.value;
+      const selectedPool = savedFilters.pool !== undefined ? savedFilters.pool : poolFilter.value;
+      const selectedTeam = savedFilters.team !== undefined ? savedFilters.team : teamFilter.value;
       const fixturesForAgeGroup = selectedAgeGroup
         ? fixtures.filter((fixture) => fixture.ageGroup === selectedAgeGroup)
         : fixtures;
@@ -486,14 +488,14 @@
         poolFilter,
         availablePools.map((pool) => ({ value: pool, label: pool })),
         "All pools",
-        poolFilter.value
+        selectedPool
       );
 
       populateSelect(
         teamFilter,
         availableTeams.map((team) => ({ value: team, label: team })),
         "All teams",
-        teamFilter.value
+        selectedTeam
       );
     }
 
@@ -602,9 +604,7 @@
         );
 
         restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
-        updateFilterOptions();
-        restoreSelectValue(poolFilter, savedFilters.pool);
-        restoreSelectValue(teamFilter, savedFilters.team);
+        updateFilterOptions(savedFilters);
         renderFixtures();
       } catch (error) {
         statusElement.textContent = "Unable to load fixtures";
