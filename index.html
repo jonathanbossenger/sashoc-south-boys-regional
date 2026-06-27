@@ -465,7 +465,12 @@
     }
 
     function restoreSelectValue(select, value) {
-      select.value = value || "";
+      if (value && select.querySelector(`option[value="${CSS.escape(value)}"]`)) {
+        select.value = value;
+        return;
+      }
+
+      select.value = "";
     }
 
     function updateFilterOptions() {
@@ -593,9 +598,10 @@
           ageGroupFilter,
           Object.entries(AGE_GROUP_LABELS).map(([value, label]) => ({ value, label })),
           "All age groups",
-          savedFilters.ageGroup
+          ""
         );
 
+        restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
         updateFilterOptions();
         restoreSelectValue(poolFilter, savedFilters.pool);
         restoreSelectValue(teamFilter, savedFilters.team);
