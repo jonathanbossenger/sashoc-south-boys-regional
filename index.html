@@ -167,11 +167,6 @@
       background: #003e9b;
     }
 
-    .status {
-      margin: 0 0 1rem;
-      color: var(--muted);
-      font-weight: 700;
-    }
 
     .fixture-list {
       display: grid;
@@ -284,7 +279,6 @@
       </div>
     </details>
 
-    <p id="status" class="status" aria-live="polite">Loading fixtures…</p>
     <section id="fixture-list" class="fixture-list" aria-live="polite"></section>
   </main>
 
@@ -326,7 +320,6 @@
     const poolFilter = document.getElementById("pool-filter");
     const teamFilter = document.getElementById("team-filter");
     const resetFiltersButton = document.getElementById("reset-filters");
-    const statusElement = document.getElementById("status");
     const fixtureListElement = document.getElementById("fixture-list");
 
     let teamLookupByAgeGroup = {};
@@ -551,7 +544,6 @@
         return true;
       });
 
-      statusElement.textContent = `${filteredFixtures.length} upcoming fixture${filteredFixtures.length === 1 ? "" : "s"} shown`;
       fixtureListElement.innerHTML = "";
 
       if (!filteredFixtures.length) {
@@ -566,7 +558,6 @@
         const article = document.createElement("article");
         article.className = "fixture-card";
 
-        const teamSummary = fixture.teams.length ? fixture.teams.join(", ") : "Pool placement fixture";
         const poolSummary = fixture.pools.length ? fixture.pools.join(" • ") : "Pool not available";
 
         article.innerHTML = `
@@ -582,8 +573,6 @@
           <div class="fixture-details">
             <div><strong>Starts:</strong> ${formatFixtureDateTime(fixture.dateTime)}</div>
             <div><strong>Venue:</strong> ${fixture.venue}</div>
-            <div><strong>Match:</strong> ${fixture.matchNumber || "TBC"}</div>
-            <div><strong>Teams:</strong> ${teamSummary}</div>
           </div>
         `;
 
@@ -628,7 +617,6 @@
         updateFilterOptions();
         renderFixtures();
       } catch (error) {
-        statusElement.textContent = "Unable to load fixtures";
         fixtureListElement.innerHTML = `<div class="message">${error.message}</div>`;
       }
     }
