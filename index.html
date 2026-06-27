@@ -465,7 +465,7 @@
     }
 
     function restoreSelectValue(select, value) {
-      if (typeof value === "string" && value && select.querySelector(`option[value="${CSS.escape(value)}"]`)) {
+      if (typeof value === "string" && value && select.querySelector(`option[value='${CSS.escape(value)}']`)) {
         select.value = value;
         return;
       }
@@ -600,7 +600,7 @@
           ageGroupFilter,
           Object.entries(AGE_GROUP_LABELS).map(([value, label]) => ({ value, label })),
           "All age groups",
-          ""
+          ageGroupFilter.value
         );
 
         restoreSelectValue(ageGroupFilter, savedFilters.ageGroup);
